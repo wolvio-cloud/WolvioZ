@@ -1,7 +1,14 @@
-# Environment variables - NEVER commit these
+# Environment variables — NEVER commit these
 .env
 .env.*
 !.env.example
+
+# Deployment backup files
+*.bak
+*.bak.*
+
+# Docker Compose local overrides
+docker-compose.override.yml
 
 # Docker volumes / data
 volumes/

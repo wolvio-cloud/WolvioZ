@@ -1,18 +1,49 @@
 services:
-  # ─── Redis ──────────────────────────────────────────────────────────────
+  # ─── Redis (LiteLLM cache + rate limiting store) ─────────────────────────
   redis:
-    image: redis:7-alpine
+    image: redis:7.4-alpine                        # Pinned minor version
     restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    # Password set via env var; cache-only (no persistence needed)
+    command: >
+      sh -c "redis-server
+      --requirepass $$REDIS_PASSWORD
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save ''
+      --appendonly no
+      --loglevel warning"
     volumes:
       - redis_data:/data
     networks:
       - wolvio
+    healthcheck:
+      # NOAUTH = server running but auth required (expected); PONG = no-auth mode
+      test: ["CMD-SHELL", "redis-cli ping 2>&1 | grep -qE 'PONG|NOAUTH'"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 320M
+        reservations:
+          memory: 64M
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
 
-  # ─── LiteLLM ────────────────────────────────────────────────────────────
+  # ─── LiteLLM (multi-provider AI gateway) ────────────────────────────────
   litellm:
+    # Production: pin to a specific release, e.g. ghcr.io/berriai/litellm:v1.x.y
     image: ghcr.io/berriai/litellm:main-latest
     restart: unless-stopped
-    # Port 4000 is NOT exposed to host — only Caddy can reach it internally
+    # Port 4000 is NOT published to the host — only reachable inside the wolvio network
     expose:
       - "4000"
     volumes:
@@ -23,10 +54,12 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       GROQ_API_KEY: ${GROQ_API_KEY}
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-    command: ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "1"]
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    command: ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "2"]
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     networks:
       - wolvio
     healthcheck:
@@ -35,12 +68,25 @@ services:
       timeout: 10s
       retries: 12
       start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 1G
+        reservations:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
 
-  # ─── Open WebUI ─────────────────────────────────────────────────────────
+  # ─── Open WebUI (chat interface) ─────────────────────────────────────────
   open-webui:
+    # Production: pin to a specific release, e.g. ghcr.io/open-webui/open-webui:v0.x.y
     image: ghcr.io/open-webui/open-webui:main
     restart: unless-stopped
-    # Not exposed to host — Caddy proxies traffic to it
+    # Port 8080 is NOT published to the host — Caddy proxies to it internally
     expose:
       - "8080"
     volumes:
@@ -50,32 +96,63 @@ services:
       OPENAI_API_KEY: ${LITELLM_MASTER_KEY}
       WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY}
       ENABLE_OLLAMA_API: "false"
-      # Disable public signup — admin creates accounts manually
+      # Admin creates accounts manually — public signup disabled
       WEBUI_AUTH: "true"
     depends_on:
       litellm:
         condition: service_healthy
     networks:
       - wolvio
+    # Image ships with a built-in HEALTHCHECK; we rely on it for service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 768M
+        reservations:
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
 
-  # ─── Caddy (HTTPS reverse proxy) ────────────────────────────────────────
+  # ─── Caddy (TLS termination + reverse proxy) ─────────────────────────────
   caddy:
-    image: caddy:2-alpine
+    image: caddy:2.9-alpine                        # Pinned minor version
     restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
+      - "443:443/udp"                              # HTTP/3 (QUIC)
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
-    environment:
-      SERVER_IP: ${SERVER_IP:-159.65.153.81}
     depends_on:
-      - open-webui
-      - litellm
+      open-webui:
+        condition: service_healthy
     networks:
       - wolvio
+    healthcheck:
+      # Caddy admin API (localhost-only by design) confirms the process is alive
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:2019/config/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+        reservations:
+          memory: 32M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
 
 volumes:
   redis_data:

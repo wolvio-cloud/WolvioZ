@@ -1,13 +1,57 @@
 # Wolvio Z — Caddy reverse proxy
-# HTTP on port 80 (plain IP access).
-# To enable HTTPS, replace ":80" with your domain name and redeploy.
+# HTTP on port 80. To enable HTTPS, replace ":80" with your domain name
+# (e.g. "ai.example.com") — Caddy provisions a Let's Encrypt cert automatically.
+
+{
+  # Admin API accessible on localhost only — used by Docker healthcheck
+  admin localhost:2019
+  # Give containers 10s to finish in-flight requests before shutdown
+  grace_period 10s
+}
 
 :80 {
+  # ── Encoding ────────────────────────────────────────────────────────────
+  encode zstd gzip
+
+  # ── Security headers ────────────────────────────────────────────────────
   header {
-    X-Content-Type-Options nosniff
-    X-Frame-Options SAMEORIGIN
-    Referrer-Policy strict-origin-when-cross-origin
+    X-Content-Type-Options        "nosniff"
+    X-Frame-Options               "SAMEORIGIN"
+    Referrer-Policy               "strict-origin-when-cross-origin"
+    Permissions-Policy            "camera=(), microphone=(), geolocation=()"
+    # Set to 0 — modern recommendation to prevent XSS-auditor vulnerabilities
+    X-XSS-Protection              "0"
     -Server
+    -X-Powered-By
   }
-  reverse_proxy open-webui:8080
+
+  # ── Access log (stdout → captured by Docker, visible via docker logs) ───
+  log {
+    output stdout
+    format json
+    level INFO
+  }
+
+  # ── Request body limit (prevents unbounded upload abuse) ────────────────
+  request_body {
+    max_size 25MB
+  }
+
+  # ── Proxy to Open WebUI ──────────────────────────────────────────────────
+  reverse_proxy open-webui:8080 {
+    header_up X-Real-IP         {remote_host}
+    header_up X-Forwarded-For   {remote_host}
+    header_up X-Forwarded-Proto {scheme}
+
+    # Passive health check — marks upstream down after consecutive failures
+    health_uri     /
+    health_interval 30s
+    health_timeout  5s
+
+    transport http {
+      dial_timeout            10s
+      # Extended timeout for long-running LLM streaming responses
+      response_header_timeout 120s
+    }
+  }
 }
