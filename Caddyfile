@@ -6,16 +6,12 @@
 #   - use $DOMAIN env var as the site address if set
 #   - fall back to ":80" if $DOMAIN is empty or unset
 
-(security_headers) {
+{$DOMAIN::80} {
   header {
     X-Content-Type-Options nosniff
     X-Frame-Options SAMEORIGIN
     Referrer-Policy strict-origin-when-cross-origin
     -Server
   }
-}
-
-{$DOMAIN::80} {
-  import security_headers
   reverse_proxy open-webui:8080
 }
