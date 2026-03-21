@@ -1,12 +1,8 @@
 # Wolvio Z — Caddy reverse proxy
-# When DOMAIN is set: serves HTTPS with auto Let's Encrypt cert
-# When DOMAIN is empty: falls back to :80 (plain HTTP on server IP)
-#
-# The {$DOMAIN::80} syntax means:
-#   - use $DOMAIN env var as the site address if set
-#   - fall back to ":80" if $DOMAIN is empty or unset
+# HTTP on port 80 (plain IP access).
+# To enable HTTPS, replace ":80" with your domain name and redeploy.
 
-{$DOMAIN::80} {
+:80 {
   header {
     X-Content-Type-Options nosniff
     X-Frame-Options SAMEORIGIN
