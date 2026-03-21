@@ -1,8 +1,6 @@
 # LiteLLM Proxy Configuration
 # Reference: https://docs.litellm.ai/docs/proxy/configs
 
-# IMPORTANT: master_key here must match LITELLM_MASTER_KEY in .env / docker-compose.yml
-# Best practice: use the env var so the key is only defined once
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
 
@@ -10,13 +8,13 @@ router_settings:
   routing_strategy: least-busy
 
 litellm_settings:
-  drop_params: true        # Ignore unsupported params per model
+  drop_params: true
   set_verbose: false
 
-# ─── Model Definitions ──────────────────────────────────────────────────────
+# ─── Models ─────────────────────────────────────────────────────────────────
 model_list:
 
-  # OpenAI
+  # ── OpenAI ──────────────────────────────────────────────────────────────
   - model_name: gpt-4o
     litellm_params:
       model: openai/gpt-4o
@@ -27,7 +25,7 @@ model_list:
       model: openai/gpt-4o-mini
       api_key: os.environ/OPENAI_API_KEY
 
-  # Anthropic Claude
+  # ── Anthropic ────────────────────────────────────────────────────────────
   - model_name: claude-3-5-sonnet
     litellm_params:
       model: anthropic/claude-3-5-sonnet-20241022
@@ -38,7 +36,7 @@ model_list:
       model: anthropic/claude-3-haiku-20240307
       api_key: os.environ/ANTHROPIC_API_KEY
 
-  # Google Gemini
+  # ── Google Gemini ────────────────────────────────────────────────────────
   - model_name: gemini-2.0-flash
     litellm_params:
       model: gemini/gemini-2.0-flash
@@ -48,3 +46,19 @@ model_list:
     litellm_params:
       model: gemini/gemini-1.5-pro
       api_key: os.environ/GEMINI_API_KEY
+
+  # ── Groq (fast inference) ────────────────────────────────────────────────
+  - model_name: llama-3.3-70b
+    litellm_params:
+      model: groq/llama-3.3-70b-versatile
+      api_key: os.environ/GROQ_API_KEY
+
+  - model_name: llama-3.1-8b
+    litellm_params:
+      model: groq/llama-3.1-8b-instant
+      api_key: os.environ/GROQ_API_KEY
+
+  - model_name: mixtral-8x7b
+    litellm_params:
+      model: groq/mixtral-8x7b-32768
+      api_key: os.environ/GROQ_API_KEY

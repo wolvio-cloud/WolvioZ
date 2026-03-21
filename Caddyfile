@@ -1,0 +1,27 @@
+# Wolvio Z — Caddy reverse proxy
+# - If DOMAIN is set: serves HTTPS with auto Let's Encrypt cert
+# - If no domain: serves HTTP on port 80 via server IP
+#
+# Caddy reads {$DOMAIN} and {$SERVER_IP} from environment variables.
+
+(common_headers) {
+  header {
+    X-Content-Type-Options nosniff
+    X-Frame-Options SAMEORIGIN
+    Referrer-Policy strict-origin-when-cross-origin
+    -Server
+  }
+}
+
+# ── With domain (HTTPS auto-cert) ────────────────────────────────────────────
+{$DOMAIN:} {
+  import common_headers
+  reverse_proxy open-webui:8080
+}
+
+# ── Fallback: serve on IP (HTTP only) ────────────────────────────────────────
+# Used when DOMAIN env var is empty
+:80 {
+  import common_headers
+  reverse_proxy open-webui:8080
+}
