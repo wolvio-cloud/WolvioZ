@@ -1,0 +1,70 @@
+version: "3.9"
+
+services:
+  # ─── Redis ──────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - wolvio
+
+  # ─── LiteLLM ────────────────────────────────────────────────────────────
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./litellm_config.yaml:/app/config.yaml:ro
+    environment:
+      # LITELLM_MASTER_KEY must match what Open WebUI sends as its API key
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
+      # Provider keys — LiteLLM reads these from env
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      # Redis for caching / rate limiting
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+    command: ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "1"]
+    depends_on:
+      - redis
+    networks:
+      - wolvio
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  # ─── Open WebUI ─────────────────────────────────────────────────────────
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    restart: unless-stopped
+    ports:
+      - "3000:8080"
+    volumes:
+      - open_webui_data:/app/backend/data
+    environment:
+      # Point Open WebUI at LiteLLM — must use the internal service name
+      OPENAI_API_BASE_URL: http://litellm:4000/v1
+      # MUST match LITELLM_MASTER_KEY exactly — this is the #1 cause of "No models"
+      OPENAI_API_KEY: ${LITELLM_MASTER_KEY}
+      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY:-change-me}
+      # Disable Ollama so WebUI uses only OpenAI-compatible (LiteLLM) endpoint
+      ENABLE_OLLAMA_API: "false"
+    depends_on:
+      litellm:
+        condition: service_healthy
+    networks:
+      - wolvio
+
+volumes:
+  redis_data:
+  open_webui_data:
+
+networks:
+  wolvio:
+    driver: bridge

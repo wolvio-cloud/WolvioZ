@@ -1,0 +1,24 @@
+# Environment variables - NEVER commit these
+.env
+.env.*
+!.env.example
+
+# Docker volumes / data
+volumes/
+data/
+*.db
+*.sqlite
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
