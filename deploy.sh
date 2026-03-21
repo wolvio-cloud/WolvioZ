@@ -41,26 +41,45 @@ echo "▶ Setting up project directory: $WORKDIR"
 mkdir -p "$WORKDIR"
 cd "$WORKDIR"
 
+_git_ok=false
 if [[ -d .git ]]; then
   echo "  Repo exists — fetching latest..."
-  git fetch origin "$BRANCH"
+  if git fetch origin "$BRANCH" 2>/dev/null; then
+    _git_ok=true
+  else
+    echo "  ⚠  Could not reach GitHub — using existing local files."
+  fi
 else
   echo "  Initialising git repo..."
   git init
   git remote add origin "$REPO" 2>/dev/null || git remote set-url origin "$REPO"
-  git fetch origin "$BRANCH"
+  if git fetch origin "$BRANCH" 2>/dev/null; then
+    _git_ok=true
+  else
+    echo "  ⚠  Could not reach GitHub — local files only."
+  fi
 fi
 
-# Pull config files (not .env)
-git checkout "origin/$BRANCH" -- \
-  docker-compose.yml \
-  litellm_config.yaml \
-  Caddyfile \
-  .gitignore \
-  .env.example \
-  scripts/
-
-echo "  Configs updated from GitHub."
+if [[ "$_git_ok" == true ]]; then
+  git checkout "origin/$BRANCH" -- \
+    docker-compose.yml \
+    litellm_config.yaml \
+    Caddyfile \
+    .gitignore \
+    .env.example \
+    scripts/ 2>/dev/null || true
+  echo "  Configs updated from GitHub."
+else
+  # Verify required files exist locally before continuing
+  for f in docker-compose.yml litellm_config.yaml Caddyfile; do
+    if [[ ! -f "$f" ]]; then
+      echo "  ✗ Missing required file: $f"
+      echo "    Ensure the repo was cloned to $WORKDIR before running this script."
+      exit 1
+    fi
+  done
+  echo "  Using existing local config files."
+fi
 
 # ─── 3. Write .env ────────────────────────────────────────────────────────────
 echo ""
