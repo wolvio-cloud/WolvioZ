@@ -14,7 +14,7 @@ router_settings:
   fallbacks:
     - {"gpt-4o": ["gpt-4o-mini"]}
     - {"claude-3-5-sonnet": ["claude-3-haiku"]}
-    - {"gemini-2.0-flash": ["gemini-1.5-flash"]}
+    - {"gemini-2.5-flash": ["gemini-2.0-flash-lite"]}
     - {"llama-3.3-70b": ["llama-3.1-8b"]}
 
 litellm_settings:
@@ -53,14 +53,14 @@ model_list:
       api_key: os.environ/ANTHROPIC_API_KEY
 
   # ── Google Gemini ────────────────────────────────────────────────────────
-  - model_name: gemini-2.0-flash
+  - model_name: gemini-2.5-flash
     litellm_params:
-      model: gemini/gemini-2.0-flash
+      model: gemini/gemini-2.5-flash-preview-04-17
       api_key: os.environ/GEMINI_API_KEY
 
-  - model_name: gemini-1.5-flash
+  - model_name: gemini-2.0-flash-lite
     litellm_params:
-      model: gemini/gemini-1.5-flash
+      model: gemini/gemini-2.0-flash-lite
       api_key: os.environ/GEMINI_API_KEY
 
   # ── Groq (fast inference) ────────────────────────────────────────────────
@@ -74,7 +74,7 @@ model_list:
       model: groq/llama-3.1-8b-instant
       api_key: os.environ/GROQ_API_KEY
 
-  - model_name: gemma2-9b
+  - model_name: qwen3-32b
     litellm_params:
-      model: groq/gemma2-9b-it
+      model: groq/qwen/qwen3-32b
       api_key: os.environ/GROQ_API_KEY
