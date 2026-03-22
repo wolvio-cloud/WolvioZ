@@ -39,8 +39,8 @@ services:
 
   # ─── LiteLLM (multi-provider AI gateway) ────────────────────────────────
   litellm:
-    # main-stable is the tested release cut from main; pin to v1.x.y for full reproducibility
-    image: ghcr.io/berriai/litellm:main-stable
+    # Pinned to latest stable release — update deliberately, not automatically
+    image: ghcr.io/berriai/litellm:v1.82.3-stable
     restart: unless-stopped
     # Port 4000 is NOT published to the host — only reachable inside the wolvio network
     expose:
@@ -84,8 +84,8 @@ services:
 
   # ─── Open WebUI (chat interface) ─────────────────────────────────────────
   open-webui:
-    # stable tracks the latest tested release; pin to v0.x.y for full reproducibility
-    image: ghcr.io/open-webui/open-webui:stable
+    # Pinned to latest stable release — update deliberately, not automatically
+    image: ghcr.io/open-webui/open-webui:v0.8.10
     restart: unless-stopped
     # Port 8080 is NOT published to the host — Caddy proxies to it internally
     expose:
