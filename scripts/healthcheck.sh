@@ -59,7 +59,7 @@ fi
 # ─── 5. Disk usage ───────────────────────────────────────────────────────────
 echo ""
 echo "▶ Disk:"
-df -h / | awk 'NR==2 {printf "  /: %s used (%s of %s, %s free)\n", $3, $2, $2, $4}'
+df -h / | awk 'NR==2 {printf "  /: %s used of %s total (%s free)\n", $3, $2, $4}'
 echo -n "  Backups: "
 du -sh /opt/backups/wolvio-z 2>/dev/null || echo "(none yet)"
 

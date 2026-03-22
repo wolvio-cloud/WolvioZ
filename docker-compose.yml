@@ -39,8 +39,8 @@ services:
 
   # ─── LiteLLM (multi-provider AI gateway) ────────────────────────────────
   litellm:
-    # Production: pin to a specific release, e.g. ghcr.io/berriai/litellm:v1.x.y
-    image: ghcr.io/berriai/litellm:main-latest
+    # main-stable is the tested release cut from main; pin to v1.x.y for full reproducibility
+    image: ghcr.io/berriai/litellm:main-stable
     restart: unless-stopped
     # Port 4000 is NOT published to the host — only reachable inside the wolvio network
     expose:
@@ -55,7 +55,10 @@ services:
       GROQ_API_KEY: ${GROQ_API_KEY}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
-    command: ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "2"]
+    # NOTE: multi-worker mode (--num_workers N) requires a shared Postgres/Redis DB
+    # for state coordination; without it workers crash immediately on startup.
+    # Single-worker is stable and sufficient for this deployment size.
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
     depends_on:
       redis:
         condition: service_healthy
@@ -81,8 +84,8 @@ services:
 
   # ─── Open WebUI (chat interface) ─────────────────────────────────────────
   open-webui:
-    # Production: pin to a specific release, e.g. ghcr.io/open-webui/open-webui:v0.x.y
-    image: ghcr.io/open-webui/open-webui:main
+    # stable tracks the latest tested release; pin to v0.x.y for full reproducibility
+    image: ghcr.io/open-webui/open-webui:stable
     restart: unless-stopped
     # Port 8080 is NOT published to the host — Caddy proxies to it internally
     expose:
@@ -94,14 +97,21 @@ services:
       OPENAI_API_KEY: ${LITELLM_MASTER_KEY}
       WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY}
       ENABLE_OLLAMA_API: "false"
-      # Admin creates accounts manually — public signup disabled
+      # Admin creates all accounts — public self-registration is disabled
       WEBUI_AUTH: "true"
+      ENABLE_SIGNUP: "false"
     depends_on:
       litellm:
         condition: service_healthy
     networks:
       - wolvio
-    # Image ships with a built-in HEALTHCHECK; we rely on it for service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
+    # (built-in HEALTHCHECK also present in the image — explicit one above takes precedence)
     deploy:
       resources:
         limits:

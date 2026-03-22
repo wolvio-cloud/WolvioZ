@@ -26,6 +26,7 @@ ufw limit 22/tcp comment "SSH (rate-limited)"
 # HTTP + HTTPS — served by Caddy
 ufw allow 80/tcp  comment "HTTP"
 ufw allow 443/tcp comment "HTTPS"
+ufw allow 443/udp comment "HTTP/3 QUIC"
 
 # Belt-and-suspenders blocks for container ports
 # (docker-compose uses 'expose' not 'ports', so these are never host-bound,
