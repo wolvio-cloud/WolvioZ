@@ -16,15 +16,18 @@ Browser → Caddy (:80/443) → Open WebUI → LiteLLM → OpenAI / Anthropic / 
 
 | Name | Provider | Use case |
 |------|----------|----------|
-| `gpt-4o` | OpenAI | Best quality |
+| `claude-opus-4` | Anthropic | **Deepest reasoning** — Claude 4, best for complex analysis |
+| `claude-sonnet-4` | Anthropic | Balanced — fast + smart, Claude 4 |
+| `claude-haiku-4` | Anthropic | Fastest Claude — quick tasks |
+| `gpt-4o` | OpenAI | Strong general model |
 | `gpt-4o-mini` | OpenAI | Fast + cheap |
-| `claude-3-5-sonnet` | Anthropic | Best reasoning |
-| `claude-3-haiku` | Anthropic | Fast Anthropic |
 | `gemini-2.5-flash` | Google | Multimodal |
 | `gemini-2.0-flash-lite` | Google | Lightweight |
 | `llama-3.3-70b` | Groq | Fast open model |
 | `llama-3.1-8b` | Groq | Ultra-fast |
 | `qwen3-32b` | Groq | Multilingual |
+| `claude-3-5-sonnet` | Anthropic | Previous gen (kept for compatibility) |
+| `claude-3-haiku` | Anthropic | Previous gen (kept for compatibility) |
 
 Provider fallbacks are configured automatically (e.g. `gpt-4o` → `gpt-4o-mini`).
 

@@ -9,10 +9,12 @@ general_settings:
 router_settings:
   routing_strategy: least-busy
   num_retries: 3
-  timeout: 90
+  timeout: 180                                       # Extended — Opus 4 takes longer for deep reasoning
   # Provider fallbacks: if primary fails, automatically route to secondary
   fallbacks:
     - {"gpt-4o": ["gpt-4o-mini"]}
+    - {"claude-opus-4": ["claude-sonnet-4"]}
+    - {"claude-sonnet-4": ["claude-haiku-4"]}
     - {"claude-3-5-sonnet": ["claude-3-haiku"]}
     - {"gemini-2.5-flash": ["gemini-2.0-flash-lite"]}
     - {"llama-3.3-70b": ["llama-3.1-8b"]}
@@ -42,6 +44,23 @@ model_list:
       api_key: os.environ/OPENAI_API_KEY
 
   # ── Anthropic ────────────────────────────────────────────────────────────
+  # Claude 4 — current generation (2025)
+  - model_name: claude-opus-4                        # Best reasoning — use for deep analysis
+    litellm_params:
+      model: anthropic/claude-opus-4-6
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: claude-sonnet-4                      # Balanced — fast + smart
+    litellm_params:
+      model: anthropic/claude-sonnet-4-6
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: claude-haiku-4                       # Fastest Claude — quick tasks
+    litellm_params:
+      model: anthropic/claude-haiku-4-5-20251001
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  # Claude 3.5 — previous generation (kept for compatibility)
   - model_name: claude-3-5-sonnet
     litellm_params:
       model: anthropic/claude-3-5-sonnet-20241022
