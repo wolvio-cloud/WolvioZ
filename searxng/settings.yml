@@ -1,0 +1,19 @@
+use_default_settings: true
+
+server:
+  # Secret key is overridden at runtime by the SEARXNG_SECRET env var
+  secret_key: "changeme"
+  # No rate limiting — this is an internal-only service (not exposed to the internet)
+  limiter: false
+  image_proxy: false
+
+ui:
+  static_use_hash: true
+
+search:
+  safe_search: 0
+  autocomplete: ""
+  default_lang: "en"
+  formats:
+    - html
+    - json                 # json format is required for Open WebUI integration

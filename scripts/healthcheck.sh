@@ -46,6 +46,15 @@ else
   echo "  ⚠  LITELLM_MASTER_KEY not found in .env"
 fi
 
+# ─── 4. SearXNG reachability ─────────────────────────────────────────────────
+echo ""
+echo "▶ SearXNG (web search):"
+if docker compose exec -T searxng wget --no-verbose --tries=1 --spider http://localhost:8080/ > /dev/null 2>&1; then
+  echo "  ✓ SearXNG healthy"
+else
+  echo "  ✗ SearXNG not responding — check: docker compose logs searxng"
+fi
+
 # ─── 4. Open WebUI reachability ──────────────────────────────────────────────
 echo ""
 echo "▶ Open WebUI reachability:"

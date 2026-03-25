@@ -2,12 +2,12 @@
 
 Self-hosted AI chat stack for a single server. One command to deploy, all models ready.
 
-**Stack:** Open WebUI → LiteLLM → Redis cache → Caddy reverse proxy
+**Stack:** Open WebUI → LiteLLM → Redis cache → Caddy reverse proxy → SearXNG web search
 
 ```
 Browser → Caddy (:80/443) → Open WebUI → LiteLLM → OpenAI / Anthropic / Gemini / Groq
-                                                    ↕
-                                                  Redis
+                                    ↕                          ↕
+                                 SearXNG                     Redis
 ```
 
 ---
@@ -57,6 +57,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 GEMINI_API_KEY=AIza...
 GROQ_API_KEY=gsk_...
 REDIS_PASSWORD=...               # generate: openssl rand -hex 24
+SEARXNG_SECRET_KEY=...           # generate: openssl rand -hex 32
 
 # Optional — set to enable HTTPS via Let's Encrypt:
 # DOMAIN=ai.yourdomain.com
@@ -90,7 +91,7 @@ Caddy provisions a Let's Encrypt certificate automatically on first request.
 | Restart service | `docker compose restart [service]` |
 | Stop everything | `docker compose down` |
 
-Services: `redis`, `litellm`, `open-webui`, `caddy`
+Services: `redis`, `litellm`, `open-webui`, `caddy`, `searxng`
 
 ### Backups
 
@@ -112,6 +113,8 @@ Backups run daily at 3am (set up by `deploy.sh`). They are stored in `/opt/backu
 ├── Caddyfile               # Reverse proxy + security headers
 ├── deploy.sh               # One-command install/re-deploy
 ├── .env.example            # Template — copy to .env
+├── searxng/
+│   └── settings.yml        # SearXNG search engine config
 └── scripts/
     ├── healthcheck.sh      # Verify all services + models
     ├── update.sh           # Rolling update (no downtime)
