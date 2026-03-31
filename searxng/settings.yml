@@ -1,4 +1,10 @@
-use_default_settings: true
+use_default_settings:
+  engines:
+    keep_only:
+      - google
+      - bing
+      - duckduckgo
+      - brave
 
 server:
   # Secret key is overridden at runtime by the SEARXNG_SECRET env var
@@ -6,6 +12,8 @@ server:
   # No rate limiting — this is an internal-only service (not exposed to the internet)
   limiter: false
   image_proxy: false
+  request_timeout: 2.0
+  max_request_timeout: 5.0
 
 ui:
   static_use_hash: true
