@@ -1,0 +1,63 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-navy: #1A2332;
+    --color-blue: #2563EB;
+    --color-slate: #475569;
+    --color-light: #F1F5F9;
+  }
+
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-brand-light text-navy font-sans;
+    font-size: 14px;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-slate-100;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400;
+  }
+}
+
+@layer utilities {
+  .text-navy {
+    color: var(--color-navy);
+  }
+  .bg-navy {
+    background-color: var(--color-navy);
+  }
+  .text-brand-slate {
+    color: var(--color-slate);
+  }
+  .bg-brand-light {
+    background-color: var(--color-light);
+  }
+  .text-brand-blue {
+    color: var(--color-blue);
+  }
+  .bg-brand-blue {
+    background-color: var(--color-blue);
+  }
+  .border-brand-blue {
+    border-color: var(--color-blue);
+  }
+}
